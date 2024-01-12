@@ -170,20 +170,20 @@ void pickUp(){
   for (angR = 150; angR >= 110; angR += -1) {
     rArm.write(angR);
     delay(globalTurnDelay); }  
-  for (angB = 90-15; angB <= 165; angB += 1) {
+  for (angB = 90-15; angB <= 168; angB += 1) {
     base.write(angB);
     delay(globalTurnDelay); } 
   rArm.write(90);
   delay(500);
   fArm.write(90);
   delay(500);
-  for (angF = 90; angF >= 30; angF += -1) {
+  for (angF = 90; angF >= 25; angF += -1) {
     fArm.write(angF);
     delay(globalTurnDelay); }     
-  for (angR = 90; angR <= 125; angR += 1) {
+  for (angR = 90; angR <= 135; angR += 1) {
     rArm.write(angR);
     delay(globalTurnDelay); }    
-  for (angC = 105; angC >=45; angC += -1) {
+  for (angC = 105; angC >=48; angC += -1) {
     claw.write(angC);
     delay(globalTurnDelay); } 
 }
