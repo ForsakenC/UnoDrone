@@ -4,6 +4,7 @@
 //——————**以下为参数设置**——————
 int turning_sensitivity = 50    ;//避障转弯速度
 int run_speed = 100    ;//直行速度
+int globalTurnDelay = 15 ;//舵机转向循环间隔
 
 //——————**以下为IO定义**——————
 const int TrackLeft_2 = A2;//左循迹传感器(P3.3 0UT2)
@@ -122,39 +123,90 @@ void back(int time){
   delay(time);
   }
 
+/*
+舵机正负表
+base     | +向左  -向右
+rArm     | +前压  
+fArm     | +up
+claw     | 45开 105闭合
+
+
+*/
+
 void pickUp(){
-  
+  base.attach(b_pin);
+  rArm.attach(r_pin);
+  fArm.attach(f_pin);
+  claw.attach(c_pin);
+  base.write(60-10);
+  delay(500);
+  rArm.write(90);
+  delay(500);
+  fArm.write(90);
+  delay(500);
+  claw.write(45);
+  delay(500);
+  claw.write(105);
+  delay(500);
+  claw.write(45);
+  delay(500);
+  int angB, angR, angF, angC ;
+  /*————————————————————*/
+  for (angB = 60-15; angB <= 90-15; angB += 1) {
+    base.write(angB);
+    delay(globalTurnDelay); }    
+  for (angF = 90; angF >= 40; angF += -1) {
+    fArm.write(angF);
+    delay(globalTurnDelay); }     
+  for (angR = 90; angR <= 155; angR += 1) {
+    rArm.write(angR);
+    delay(globalTurnDelay); }    
+  for (angC = 45; angC <= 105; angC += 1) {
+    claw.write(angC);
+    delay(globalTurnDelay); } 
+  for (angF = 40; angF <= 110; angF += 1) {
+    fArm.write(angF);
+    delay(globalTurnDelay); }     
+  for (angR = 150; angR >= 110; angR += -1) {
+    rArm.write(angR);
+    delay(globalTurnDelay); }  
+  for (angB = 90-15; angB <= 165; angB += 1) {
+    base.write(angB);
+    delay(globalTurnDelay); } 
+  rArm.write(90);
+  delay(500);
+  fArm.write(90);
+  delay(500);
+  for (angF = 90; angF >= 30; angF += -1) {
+    fArm.write(angF);
+    delay(globalTurnDelay); }     
+  for (angR = 90; angR <= 125; angR += 1) {
+    rArm.write(angR);
+    delay(globalTurnDelay); }    
+  for (angC = 105; angC >=45; angC += -1) {
+    claw.write(angC);
+    delay(globalTurnDelay); } 
 }
+
+
 
 void loop(){
   SL_2=digitalRead(SensorLeft_2);
   SR_2=digitalRead(SensorRight_2);
-  if (SL_2==HIGH && SR_2==HIGH){//无障碍物
-/*———————————————————————————————————————*/
+  if (SL_2==HIGH && SR_2==HIGH){
     TL_2=digitalRead(TrackLeft_2);
     TR_2=digitalRead(TrackRight_2);
     if (TL_2 == LOW && TR_2 == LOW){
       run(run_speed);}
-    else if(TL_2 == HIGH && TR_2 == LOW){TL_2=digitalRead(TrackLeft_2);
-  TR_2=digitalRead(TrackRight_2);
-  if (TL_2 == LOW && TR_2 == LOW){
-    run(run_speed);}
-  else if(TL_2 == HIGH && TR_2 == LOW){
-    left(turning_sensitivity );}
-  else if(TL_2 == LOW && TR_2 == HIGH){
-    right(turning_sensitivity );}
-  else 
-    brake();
-      left(turning_sensitivity );}
+    else if(TL_2 == HIGH && TR_2 == LOW){
+          left(turning_sensitivity );}
     else if(TL_2 == LOW && TR_2 == HIGH){
-      right(turning_sensitivity );}
-    else 
-      brake();}
-/*————————————————————————————————————————*/
-  else if(SL_2==HIGH && SR_2==LOW)
-    left(100);
-  else if(SL_2==LOW && SR_2==HIGH)
-    right(100);
-  else 
+          right(turning_sensitivity );}
+    else {brake();}
+    }
+  else if(SL_2==LOW && SR_2==LOW){
     brake();
+    pickUp();
+    delay(3000);
   }
+}
