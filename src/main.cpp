@@ -5,6 +5,7 @@
 int turning_sensitivity = 50    ;//避障转弯速度
 int run_speed = 100    ;//直行速度
 int globalTurnDelay = 15 ;//舵机转向循环间隔
+int baseStd = 50 ;//base舵机初始位置重定义
 
 //——————**以下为IO定义**——————
 const int TrackLeft_2 = A2;//左循迹传感器(P3.3 0UT2)
@@ -17,17 +18,18 @@ int Left_motor_back = 8;//左电机后退(IN1)
 int Right_motor_go = 10; // 右电机前进(IN3)
 int Right_motor_back = 12;// 右电机后退(IN4)
 
-int TL_2;
-int TR_2;
-int SL_2;//左避障传感器状态
-int SR_2;//右避障传感器状态
-
 int b_pin = 11;//定义舵机引脚
 int r_pin = 5;
 int f_pin = 3;
 int c_pin = 6;
 
+/*——————全局变量定义——————*/
 Servo base, rArm, fArm, claw ;
+int angB, angR, angF, angC ;//舵机角度状态
+int TL_2;//左循迹传感器状态
+int TR_2;//右循迹传感器状态
+int SL_2;//左避障传感器状态
+int SR_2;//右避障传感器状态
 
 void init_arm(){  //初始化舵机函数
   base.attach(b_pin);
@@ -61,7 +63,6 @@ void setup(){//初始化电机驱动I0为输出方式
   pinMode(SensorLeft_2,INPUT); //定义左避障传感器为输入
   pinMode(SensorRight_2,INPUT);//定义右道障传感器为输入
 }
-
 
 void run(int speed){
   analogWrite(Left_motor_go,speed*0.88);
@@ -106,7 +107,7 @@ void right(int speed)  //右转（右轮不动左轮前进）
   //delay(time*100);  //执行时间，可以调整
 }
 
-void spin_right( int speed) //右转（右轮后退，左轮前进）
+void spin_right(int speed) //右转（右轮后退，左轮前进）
 {
   analogWrite(Right_motor_go,0); //右轮后退
   digitalWrite(Right_motor_back,HIGH);
@@ -123,14 +124,81 @@ void back(int time){
   delay(time);
   }
 
+void capture(){
+  claw.attach(c_pin);
+  for (angC = 45; angC <= 105; angC += 1) {
+    claw.write(angC);
+    delay(globalTurnDelay); } 
+}
+
+void release(){
+  claw.attach(c_pin);
+  for (angC = 105; angC >=45; angC += -1) {
+    claw.write(angC);
+    delay(globalTurnDelay); } 
+}
+
+void arMove(char flag, char direct, char angX){
+  base.attach(b_pin);
+  rArm.attach(r_pin);
+  fArm.attach(f_pin);
+  int angP, angT;
+  if (flag == 'b'){
+    if (direct == 'l'){
+      angT = angB + angX;
+      for (angP = angB; angP <= angT; angP += 1) {
+        base.write(angP);
+        delay(globalTurnDelay); }   
+      angB = angT;
+    }
+    else if (direct == 'r'){
+      angT = angB - angX;
+      for (angP = angB; angP >= angT; angP += -1) {
+        base.write(angP);
+        delay(globalTurnDelay); }   
+      angB = angT;
+    }
+  }
+  else if (flag == 'r'){
+    if (direct == 'f'){
+      angT = angR + angX;
+      for (angP = angR; angP <= angT; angP += 1) {
+        rArm.write(angP);
+        delay(globalTurnDelay); }  
+      angR = angT;
+    }
+    else if (direct == 'b'){
+      angT = angR - angX;
+      for (angP = angR; angP >= angT; angP += -1) {
+        rArm.write(angP);
+        delay(globalTurnDelay); } 
+        angR = angT;
+    }
+  }
+  else if (flag == 'f'){
+    if (direct == 'u'){
+      angT = angF + angX;
+      for (angP = angF; angP <= angT; angP += 1){
+        fArm.write(angP);
+        delay(globalTurnDelay); }
+        angF = angT;
+    }
+    else if (direct == 'd'){
+      angT = angF - angX;
+      for (angP = angF; angP >= angT; angP += -1){
+        fArm.write(angP);
+        delay(globalTurnDelay); }
+        angF = angT;
+    }
+  }
+}
+
 /*
 舵机正负表
 base     | +向左  -向右
 rArm     | +前压  
 fArm     | +up
 claw     | 45开 105闭合
-
-
 */
 
 void pickUp(){
@@ -138,7 +206,7 @@ void pickUp(){
   rArm.attach(r_pin);
   fArm.attach(f_pin);
   claw.attach(c_pin);
-  base.write(60-10);
+  base.write(baseStd);
   delay(500);
   rArm.write(90);
   delay(500);
@@ -146,11 +214,6 @@ void pickUp(){
   delay(500);
   claw.write(45);
   delay(500);
-  claw.write(105);
-  delay(500);
-  claw.write(45);
-  delay(500);
-  int angB, angR, angF, angC ;
   /*————————————————————*/
   for (angB = 60-15; angB <= 90-15; angB += 1) {
     base.write(angB);
